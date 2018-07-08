@@ -6,8 +6,9 @@ import time
 
 
 def generate_data():
-    np.random.seed(int(time.time()))
-    X, y = datasets.make_moons(200, noise=0.20)
+    # np.random.seed(int(time.time()))
+    np.random.seed(0)
+    X, y = datasets.make_moons(200, noise=0.30)
     return X, y
 
 
@@ -35,7 +36,7 @@ def plot_decision_boundary(pred_func, X, y):
 
 
 X, y = generate_data()
-nn = NeuralNetwork(2, 100, 2, 0.01)
+nn = NeuralNetwork(2, 60, 2, 0.01)
 
 for i in range(0, 20000):
     nn.train(X, y)
