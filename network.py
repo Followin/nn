@@ -6,11 +6,12 @@ import numpy as np
 # w_h_o 3 x 2
 
 class NeuralNetwork:
-    def __init__(self, input_dim, hidden_dim, output_dim, learning_rate):
+    def __init__(self, input_dim, hidden_dim, output_dim, learning_rate, regularization_lambda):
         self.hidden_dim = hidden_dim
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.learning_rate = learning_rate
+        self.regularization_lambda = regularization_lambda
 
         np.random.seed(0)
         self.weights_input_hidden = np.random.rand(input_dim, hidden_dim) / np.sqrt(input_dim)
@@ -51,8 +52,10 @@ class NeuralNetwork:
         delta_weights_input_hidden = np.dot(np.transpose(input_vector), delta_input_hidden)
         delta_bias_hidden = np.sum(delta_input_hidden, axis=0)
 
-        self.weights_hidden_output += -self.learning_rate * delta_weights_hidden_output
-        self.weights_input_hidden += -self.learning_rate * delta_weights_input_hidden
+        self.weights_hidden_output += -self.learning_rate * (delta_weights_hidden_output
+                                                             + self.regularization_lambda * self.weights_hidden_output)
+        self.weights_input_hidden += -self.learning_rate * (delta_weights_input_hidden
+                                                            + self.regularization_lambda * self.weights_input_hidden)
         self.bias_output += -self.learning_rate * delta_bias_output
         self.bias_hidden += -self.learning_rate * delta_bias_hidden
 

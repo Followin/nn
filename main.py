@@ -2,14 +2,20 @@ from network import NeuralNetwork
 import numpy as np
 from sklearn import datasets
 import matplotlib.pyplot as plt
-import time
 
 
 def generate_data():
     # np.random.seed(int(time.time()))
     np.random.seed(0)
     X, y = datasets.make_moons(200, noise=0.30)
-    return X, y
+    buffer = np.array([])
+    for index, item in enumerate(X):
+        buffer = np.append(buffer, (item[0], item[1], y[index]))
+
+    buffer = buffer.reshape(200, 3)
+    np.random.shuffle(buffer)
+
+    return buffer[:, :2], buffer[:, 2:3].flatten().astype(int)
 
 
 def visualize(X, y, network):
@@ -35,13 +41,23 @@ def plot_decision_boundary(pred_func, X, y):
     plt.show()
 
 
+train = 160
+test = 20
 X, y = generate_data()
-nn = NeuralNetwork(2, 60, 2, 0.01)
+X_train = X[:train, :]
+y_train = y[:train]
+X_test = X[train:200-test, :]
+y_test = y[train:200-test]
+X_validation = X[200-test:200, :]
+y_validation = y[200-test:200]
+
+nn = NeuralNetwork(2, 100, 2, 0.003, 0.2)
 
 for i in range(0, 20000):
-    nn.train(X, y)
+    nn.train(X_train, y_train)
 
     if i % 1000 == 0:
-        print(f'loss after {i} {nn.calculate_loss(X, y)}')
+        print(f'loss after {i} test: {nn.calculate_loss(X_test, y_test)} train: {nn.calculate_loss(X_train, y_train)}')
 
-visualize(X, y, nn)
+print(f'validation loss: {nn.calculate_loss(X_validation, y_validation)}')
+visualize(X_test, y_test, nn)
