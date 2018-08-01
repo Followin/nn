@@ -51,7 +51,12 @@ y_test = y[train:200-test]
 X_validation = X[200-test:200, :]
 y_validation = y[200-test:200]
 
-nn = NeuralNetwork(2, 100, 2, 0.003, 0.2)
+
+best_loss = 150
+best_rate = 0
+best_reg = 0
+
+nn = NeuralNetwork(2, 10, 5, 2, 0.03, 0.0002)
 
 for i in range(0, 20000):
     nn.train(X_train, y_train)
@@ -60,4 +65,4 @@ for i in range(0, 20000):
         print(f'loss after {i} test: {nn.calculate_loss(X_test, y_test)} train: {nn.calculate_loss(X_train, y_train)}')
 
 print(f'validation loss: {nn.calculate_loss(X_validation, y_validation)}')
-visualize(X_test, y_test, nn)
+visualize(X_validation, y_validation, nn)
