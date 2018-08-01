@@ -41,6 +41,15 @@ def plot_decision_boundary(pred_func, X, y):
     plt.show()
 
 
+sigmoid = lambda input_vector: 1 / (1 + np.exp(-input_vector))
+sigmoid_der = lambda input_vector: sigmoid(input_vector) * (1 - sigmoid(input_vector))
+
+tanh = np.tanh
+tanh_der = lambda input_vector: 1 - np.power(np.tanh(input_vector), 2)
+
+arctan = np.arctan
+arctan_der = lambda input_vector: 1 / (np.power(input_vector, 2) + 1)
+
 train = 160
 test = 20
 X, y = generate_data()
@@ -56,7 +65,12 @@ best_loss = 150
 best_rate = 0
 best_reg = 0
 
-nn = NeuralNetwork(2, 10, 5, 2, 0.03, 0.0002)
+layers = [
+    {'dimension': 10, 'activation_func': sigmoid, 'activation_func_der': sigmoid_der},
+    {'dimension': 5, 'activation_func': tanh, 'activation_func_der': tanh_der}
+]
+
+nn = NeuralNetwork(2, layers, 2, 0.03, 0.0002)
 
 for i in range(0, 20000):
     nn.train(X_train, y_train)
