@@ -16,20 +16,24 @@ class NeuralNetwork:
         self.regularization_lambda = regularization_lambda
 
         np.random.seed(0)
-        self.weights_hiddentail_output = np.random.rand(hidden_layers[-1]['dimension'], output_dim) / np.sqrt(hidden_layers[-1]['dimension'])
+
+        self.weights_hidden = []
 
         weights_input_hiddenhead = np.random.rand(input_dim, hidden_layers[0]['dimension']) / np.sqrt(input_dim)
-        self.weights_hidden = [weights_input_hiddenhead]
-        for i, current_layer in enumerate(hidden_layers[1:]):
+        self.weights_hidden.append(weights_input_hiddenhead)
+
+        for i, current_layer in list(enumerate(hidden_layers))[1:]:
             previous_layer = hidden_layers[i - 1]
             weights = np.random.rand(previous_layer['dimension'], current_layer['dimension']) / np.sqrt(previous_layer['dimension'])
             self.weights_hidden.append(weights)
 
-        self.bias_output = np.zeros((1, output_dim))
+        weights_hiddentail_output = np.random.rand(hidden_layers[-1]['dimension'], output_dim) / np.sqrt(hidden_layers[-1]['dimension'])
+        self.weights_hidden.append(weights_hiddentail_output)
 
         self.biases_hidden = []
         for layer in hidden_layers:
             self.biases_hidden.append(np.zeros((1, layer['dimension'])))
+        self.biases_hidden.append(np.zeros((1, output_dim)))
 
     def predict(self, input_vector):
         outputs = [input_vector]
@@ -37,7 +41,7 @@ class NeuralNetwork:
             layer_input = np.dot(outputs[-1], self.weights_hidden[i]) + self.biases_hidden[i]
             outputs.append(layer['activation_func'](layer_input))
 
-        output_layer_input = np.dot(outputs[-1], self.weights_hiddentail_output) + self.bias_output
+        output_layer_input = np.dot(outputs[-1], self.weights_hidden[-1]) + self.biases_hidden[-1]
         output_layer_output = _softmax(output_layer_input)
 
         return np.argmax(output_layer_output, axis=1)
@@ -48,7 +52,7 @@ class NeuralNetwork:
             layer_input = np.dot(outputs[-1], self.weights_hidden[i]) + self.biases_hidden[i]
             outputs.append(layer['activation_func'](layer_input))
 
-        output_layer_input = np.dot(outputs[-1], self.weights_hiddentail_output) + self.bias_output
+        output_layer_input = np.dot(outputs[-1], self.weights_hidden[-1]) + self.biases_hidden[-1]
         output_layer_output = _softmax(output_layer_input)
 
         data_loss = -np.log(output_layer_output[range(input_vector.shape[0]), target_vector])
@@ -56,31 +60,36 @@ class NeuralNetwork:
 
     def train(self, input_vector, target_vector):
         outputs = [input_vector]
+        inputs = [input_vector]
+
         for i, layer in enumerate(self.hidden_layers):
             layer_input = np.dot(outputs[-1], self.weights_hidden[i]) + self.biases_hidden[i]
+            inputs.append(layer_input)
             outputs.append(layer['activation_func'](layer_input))
 
-        output_layer_input = np.dot(outputs[-1], self.weights_hiddentail_output) + self.bias_output
+        output_layer_input = np.dot(outputs[-1], self.weights_hidden[-1]) + self.biases_hidden[-1]
         output_layer_output = _softmax(output_layer_input)
 
         delta_hiddentail_output = np.copy(output_layer_output)
         delta_hiddentail_output[range(output_layer_output.shape[0]), target_vector] -= 1
         delta_weights_hiddentail_output = np.dot(np.transpose(outputs[-1]), delta_hiddentail_output)
-        delta_bias_output = np.sum(delta_hiddentail_output, axis=0, keepdims=True)
-        self.weights_hiddentail_output += -self.learning_rate * (delta_weights_hiddentail_output + self.regularization_lambda * self.weights_hiddentail_output)
-        self.bias_output += -self.learning_rate * delta_bias_output
 
-        deltas = [delta_hiddentail_output]
+        weights_deltas = [delta_weights_hiddentail_output]
+        bias_deltas = [np.sum(delta_hiddentail_output, axis=0, keepdims=True)]
 
+        layer_deltas = [delta_hiddentail_output]
         for i, layer in reversed(list(enumerate(self.hidden_layers))):
-            layer_delta = np.dot(deltas[-1], np.transpose(self.weights_hidden[i])) * layer['activation_func_der']
+            layer_delta = np.dot(layer_deltas[-1], np.transpose(self.weights_hidden[i + 1])) * layer['activation_func_der'](inputs[i + 1])
             weights_delta = np.dot(np.transpose(outputs[i]), layer_delta)
             bias_delta = np.sum(layer_delta, axis=0)
 
-            self.weights_hidden[i] += -self.learning_rate * (weights_delta + self.regularization_lambda + self.weights_hidden[i])
-            self.biases_hidden[i] += -self.learning_rate * bias_delta
+            layer_deltas.append(layer_delta)
+            weights_deltas.insert(0, weights_delta)
+            bias_deltas.insert(0, bias_delta)
 
-            deltas.append(layer_delta)
+        for i in range(len(self.weights_hidden) - 1):
+            self.weights_hidden[i] += -self.learning_rate * (weights_deltas[i] + self.regularization_lambda * self.weights_hidden[i])
+            self.biases_hidden[i] += -self.learning_rate * bias_deltas[i]
 
 
 def _softmax(input_vector):
