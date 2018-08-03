@@ -87,7 +87,7 @@ class NeuralNetwork:
             weights_deltas.insert(0, weights_delta)
             bias_deltas.insert(0, bias_delta)
 
-        for i in range(len(self.weights_hidden) - 1):
+        for i in range(len(self.weights_hidden)):
             self.weights_hidden[i] += -self.learning_rate * (weights_deltas[i] + self.regularization_lambda * self.weights_hidden[i])
             self.biases_hidden[i] += -self.learning_rate * bias_deltas[i]
 
